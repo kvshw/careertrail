@@ -60,6 +60,19 @@ export default function SignUpForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Back Button */}
+        <div className="flex justify-start">
+          <a
+            href="/"
+            className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors duration-200 group"
+          >
+            <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Home
+          </a>
+        </div>
+        
         {/* Logo and Header */}
         <div className="text-center">
           <div className="flex justify-center mb-6">
