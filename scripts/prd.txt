@@ -1,0 +1,110 @@
+# CareerTrail - Job Application Tracker
+## Product Requirements Document
+
+### Project Overview
+CareerTrail is a modern, web-based job application tracker designed to help users efficiently manage their job search process. The application provides a clean, intuitive interface for tracking job applications, managing application statuses, and gaining insights into the job search journey.
+
+### Core Features
+
+#### 1. User Authentication
+- Email and password authentication using Supabase Auth
+- Secure user sessions and protected routes
+- User profile management
+
+#### 2. Job Application Management
+- Add new job applications with company name, role, application date, and notes
+- Edit existing job applications
+- Delete job applications
+- View detailed job application information
+
+#### 3. Status Tracking
+- Track application statuses: Applied, Interviewing, Offer, Rejected
+- Visual status indicators and progress tracking
+- Status change history
+
+#### 4. Dashboard & Views
+- Main dashboard with overview of all applications
+- Status board view (Kanban-style) for visual organization
+- List view with filtering and sorting options
+- Search functionality by company name or role
+
+#### 5. Data Management
+- Export job applications to CSV format
+- Import job applications (future enhancement)
+- Data backup and recovery
+
+#### 6. Real-time Features
+- Real-time updates when data changes (Supabase Realtime)
+- Live status updates across multiple browser tabs
+
+### Technical Requirements
+
+#### Frontend
+- Next.js 14 with App Router
+- React 18+ with TypeScript
+- Tailwind CSS for styling
+- Responsive design for mobile and desktop
+- Modern UI components (shadcn/ui or similar)
+
+#### Backend & Database
+- Supabase as the backend service
+- PostgreSQL database
+- Row Level Security (RLS) for data protection
+- Real-time subscriptions for live updates
+
+#### Database Schema
+```sql
+-- Users table (handled by Supabase Auth)
+-- jobs table
+CREATE TABLE jobs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  company TEXT NOT NULL,
+  role TEXT NOT NULL,
+  status TEXT CHECK (status IN ('applied', 'interviewing', 'offer', 'rejected')) DEFAULT 'applied',
+  link TEXT,
+  notes TEXT,
+  applied_date DATE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+#### Security
+- Row Level Security (RLS) policies
+- User authentication required for all operations
+- Data isolation between users
+- Secure API endpoints
+
+### User Experience Goals
+- Clean, intuitive interface that requires minimal learning
+- Fast loading times and smooth interactions
+- Mobile-responsive design
+- Accessible design following WCAG guidelines
+- Clear visual hierarchy and status indicators
+
+### Performance Requirements
+- Page load times under 2 seconds
+- Real-time updates within 500ms
+- Support for 1000+ job applications per user
+- Optimized database queries
+
+### Deployment & Hosting
+- Frontend: Vercel deployment
+- Backend: Supabase cloud hosting
+- Environment variable management
+- CI/CD pipeline for automated deployments
+
+### Future Enhancements (Phase 2)
+- Email notifications for status changes
+- Interview scheduling and reminders
+- Resume and cover letter management
+- Analytics and insights dashboard
+- Integration with job boards (LinkedIn, Indeed)
+- Mobile app (React Native)
+
+### Success Metrics
+- User engagement: Daily active users
+- Feature adoption: Percentage of users adding jobs
+- Performance: Page load times and API response times
+- User satisfaction: Feedback and ratings 
