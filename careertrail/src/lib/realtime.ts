@@ -20,6 +20,11 @@ export class RealtimeService {
    * Subscribe to real-time changes for jobs
    */
   subscribeToJobs(userId: string, callback: RealtimeCallback<Job>) {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return null
+    }
+    
     if (this.subscriptions.jobs) {
       this.subscriptions.jobs.unsubscribe()
     }
@@ -45,6 +50,11 @@ export class RealtimeService {
    * Subscribe to real-time changes for documents
    */
   subscribeToDocuments(userId: string, callback: RealtimeCallback<Document>) {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return null
+    }
+    
     if (this.subscriptions.documents) {
       this.subscriptions.documents.unsubscribe()
     }
@@ -70,6 +80,11 @@ export class RealtimeService {
    * Subscribe to real-time changes for folders
    */
   subscribeToFolders(userId: string, callback: RealtimeCallback<Folder>) {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return null
+    }
+    
     if (this.subscriptions.folders) {
       this.subscriptions.folders.unsubscribe()
     }
@@ -95,6 +110,11 @@ export class RealtimeService {
    * Subscribe to real-time changes for contacts
    */
   subscribeToContacts(userId: string, callback: RealtimeCallback<Contact>) {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return null
+    }
+    
     if (this.subscriptions.contacts) {
       this.subscriptions.contacts.unsubscribe()
     }
@@ -120,6 +140,11 @@ export class RealtimeService {
    * Subscribe to real-time changes for contact interactions
    */
   subscribeToContactInteractions(userId: string, callback: RealtimeCallback<ContactInteraction>) {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return null
+    }
+    
     if (this.subscriptions.contactInteractions) {
       this.subscriptions.contactInteractions.unsubscribe()
     }
@@ -145,6 +170,11 @@ export class RealtimeService {
    * Subscribe to real-time changes for interviews
    */
   subscribeToInterviews(userId: string, callback: RealtimeCallback<Interview>) {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return null
+    }
+    
     if (this.subscriptions.interviews) {
       this.subscriptions.interviews.unsubscribe()
     }

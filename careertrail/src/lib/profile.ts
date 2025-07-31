@@ -5,6 +5,11 @@ export class ProfileService {
   // Get user profile or create one if it doesn't exist
   static async getUserProfile(userId: string): Promise<UserProfile | null> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return null
+      }
+      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -30,6 +35,11 @@ export class ProfileService {
   // Create a default profile for a user
   static async createDefaultProfile(userId: string): Promise<UserProfile | null> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return null
+      }
+      
       const { data, error } = await supabase
         .from('user_profiles')
         .insert({
@@ -63,6 +73,11 @@ export class ProfileService {
   // Create or update user profile
   static async upsertUserProfile(userId: string, profileData: UserProfileFormData): Promise<UserProfile | null> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return null
+      }
+      
       const { data, error } = await supabase
         .from('user_profiles')
         .upsert({
@@ -90,6 +105,11 @@ export class ProfileService {
   // Upload avatar
   static async uploadAvatar(userId: string, file: File): Promise<string | null> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return null
+      }
+      
       const fileExt = file.name.split('.').pop()
       const fileName = `${userId}-${Date.now()}.${fileExt}`
       const filePath = `avatars/${fileName}`
@@ -121,6 +141,11 @@ export class ProfileService {
   // Delete avatar
   static async deleteAvatar(userId: string, avatarUrl: string): Promise<boolean> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return false
+      }
+      
       // Extract file path from URL
       const urlParts = avatarUrl.split('/')
       const fileName = urlParts[urlParts.length - 1]
@@ -145,6 +170,11 @@ export class ProfileService {
   // Update user preferences
   static async updatePreferences(userId: string, preferences: UserProfileFormData['preferences']): Promise<boolean> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return false
+      }
+      
       const { error } = await supabase
         .from('user_profiles')
         .update({

@@ -181,6 +181,11 @@ export default function Dashboard() {
 
   const fetchJobs = async () => {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+      
       // Only show loading if we don't have any jobs data yet
       if (jobs.length === 0) {
         setLoading(true)
@@ -208,6 +213,11 @@ export default function Dashboard() {
 
   const fetchDocuments = async () => {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+      
       const { data, error } = await supabase
         .from('documents')
         .select('*')
@@ -273,6 +283,11 @@ export default function Dashboard() {
 
   const handleAddJob = async (jobData: JobFormData) => {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+      
       const { data, error } = await supabase
         .from('jobs')
         .insert([{ ...jobData, user_id: user?.id }])
@@ -305,6 +320,11 @@ export default function Dashboard() {
       variant: 'danger',
       onConfirm: async () => {
         try {
+          if (!supabase) {
+            console.error('Supabase client not initialized')
+            return
+          }
+          
           const { error } = await supabase
             .from('jobs')
             .delete()
@@ -330,6 +350,11 @@ export default function Dashboard() {
     try {
       if (!user?.id) {
         throw new Error('User not authenticated')
+      }
+      
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
       }
       
       const { data, error } = await supabase
@@ -388,6 +413,11 @@ export default function Dashboard() {
       variant: 'danger',
       onConfirm: async () => {
         try {
+          if (!supabase) {
+            console.error('Supabase client not initialized')
+            return
+          }
+          
           const { error } = await supabase
             .from('documents')
             .update({ is_active: false })
@@ -417,6 +447,11 @@ export default function Dashboard() {
       variant: 'danger',
       onConfirm: async () => {
         try {
+          if (!supabase) {
+            console.error('Supabase client not initialized')
+            return
+          }
+          
           const { error } = await supabase
             .from('documents')
             .update({ is_active: false })
@@ -442,6 +477,11 @@ export default function Dashboard() {
     try {
       if (!user?.id) {
         throw new Error('User not authenticated')
+      }
+
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
       }
 
       const { data, error } = await supabase
@@ -636,6 +676,11 @@ export default function Dashboard() {
       variant: 'danger',
       onConfirm: async () => {
         try {
+          if (!supabase) {
+            console.error('Supabase client not initialized')
+            return
+          }
+          
           const { error } = await supabase
             .from('jobs')
             .delete()

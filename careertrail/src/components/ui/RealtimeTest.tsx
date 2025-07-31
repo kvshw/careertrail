@@ -32,6 +32,11 @@ export default function RealtimeTest({
         user_id: userId
       }
 
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+      
       const { data, error } = await supabase
         .from('jobs')
         .insert([testJob])
@@ -67,6 +72,11 @@ export default function RealtimeTest({
         user_id: userId
       }
 
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+      
       const { data, error } = await supabase
         .from('documents')
         .insert([testDocument])
@@ -102,6 +112,11 @@ export default function RealtimeTest({
         user_id: userId
       }
 
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+      
       const { data, error } = await supabase
         .from('contacts')
         .insert([testContact])

@@ -4,6 +4,11 @@ import { Interview, InterviewFormData, InterviewRound, InterviewRoundFormData, I
 export class InterviewService {
   // Interview CRUD operations
   static async getInterviews(userId: string): Promise<Interview[]> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return []
+    }
+    
     const { data, error } = await supabase
       .from('interviews')
       .select(`
@@ -26,6 +31,11 @@ export class InterviewService {
   }
 
   static async getInterview(id: string, userId: string): Promise<Interview> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from('interviews')
       .select(`
@@ -49,6 +59,11 @@ export class InterviewService {
   }
 
   static async createInterview(interviewData: InterviewFormData, userId: string): Promise<Interview> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from('interviews')
       .insert([{ ...interviewData, user_id: userId }])
@@ -71,6 +86,11 @@ export class InterviewService {
   }
 
   static async updateInterview(id: string, updates: Partial<InterviewFormData>, userId: string): Promise<Interview> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from('interviews')
       .update(updates)
@@ -95,6 +115,11 @@ export class InterviewService {
   }
 
   static async deleteInterview(id: string, userId: string): Promise<void> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return
+    }
+    
     const { error } = await supabase
       .from('interviews')
       .delete()
@@ -108,6 +133,11 @@ export class InterviewService {
 
   // Interview Rounds operations
   static async getInterviewRounds(interviewId: string, userId: string): Promise<InterviewRound[]> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return []
+    }
+    
     // First verify the interview belongs to the user
     const { data: interview, error: interviewError } = await supabase
       .from('interviews')
@@ -134,6 +164,11 @@ export class InterviewService {
   }
 
   static async createInterviewRound(roundData: InterviewRoundFormData, interviewId: string, userId: string): Promise<InterviewRound> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     // First verify the interview belongs to the user
     const { data: interview, error: interviewError } = await supabase
       .from('interviews')
@@ -160,6 +195,11 @@ export class InterviewService {
   }
 
   static async updateInterviewRound(id: string, updates: Partial<InterviewRoundFormData>, userId: string): Promise<InterviewRound> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     // First verify the round belongs to a user's interview
     const { data: round, error: roundError } = await supabase
       .from('interview_rounds')
@@ -197,6 +237,11 @@ export class InterviewService {
   }
 
   static async deleteInterviewRound(id: string, userId: string): Promise<void> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return
+    }
+    
     // First verify the round belongs to a user's interview
     const { data: round, error: roundError } = await supabase
       .from('interview_rounds')
@@ -231,6 +276,11 @@ export class InterviewService {
 
   // Interview Questions operations
   static async getInterviewQuestions(userId: string, category?: string): Promise<InterviewQuestion[]> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return []
+    }
+    
     let query = supabase
       .from('interview_questions')
       .select('*')
@@ -251,6 +301,11 @@ export class InterviewService {
   }
 
   static async createInterviewQuestion(questionData: InterviewQuestionFormData, userId: string): Promise<InterviewQuestion> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from('interview_questions')
       .insert([{ ...questionData, user_id: userId }])
@@ -265,6 +320,11 @@ export class InterviewService {
   }
 
   static async updateInterviewQuestion(id: string, updates: Partial<InterviewQuestionFormData>, userId: string): Promise<InterviewQuestion> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from('interview_questions')
       .update(updates)
@@ -281,6 +341,11 @@ export class InterviewService {
   }
 
   static async deleteInterviewQuestion(id: string, userId: string): Promise<void> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return
+    }
+    
     const { error } = await supabase
       .from('interview_questions')
       .delete()
@@ -294,6 +359,11 @@ export class InterviewService {
 
   // Interview Question Responses operations
   static async getInterviewQuestionResponses(interviewId: string, userId: string): Promise<InterviewQuestionResponse[]> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return []
+    }
+    
     // First verify the interview belongs to the user
     const { data: interview, error: interviewError } = await supabase
       .from('interviews')
@@ -320,6 +390,11 @@ export class InterviewService {
   }
 
   static async createInterviewQuestionResponse(responseData: InterviewQuestionResponseFormData, interviewId: string, userId: string): Promise<InterviewQuestionResponse> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     // First verify the interview belongs to the user
     const { data: interview, error: interviewError } = await supabase
       .from('interviews')
@@ -346,6 +421,11 @@ export class InterviewService {
   }
 
   static async updateInterviewQuestionResponse(id: string, updates: Partial<InterviewQuestionResponseFormData>, userId: string): Promise<InterviewQuestionResponse> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     // First verify the response belongs to a user's interview
     const { data: response, error: responseError } = await supabase
       .from('interview_question_responses')
@@ -383,6 +463,11 @@ export class InterviewService {
   }
 
   static async deleteInterviewQuestionResponse(id: string, userId: string): Promise<void> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return
+    }
+    
     // First verify the response belongs to a user's interview
     const { data: response, error: responseError } = await supabase
       .from('interview_question_responses')

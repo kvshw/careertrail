@@ -178,6 +178,7 @@ export default function Home() {
       <div className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
+            {/* This section showcases companies where CareerTrail users have successfully landed jobs */}
             <p className="text-gray-600 text-sm font-medium mb-8">Trusted by professionals at</p>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center opacity-60">
               <div className="text-gray-400 font-semibold">Google</div>

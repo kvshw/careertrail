@@ -7,6 +7,11 @@ export class CompanyService {
    */
   static async searchCompanies(query: string, limit: number = 10): Promise<Company[]> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return []
+      }
+      
       const { data, error } = await supabase
         .from('companies')
         .select('*')
@@ -31,6 +36,11 @@ export class CompanyService {
    */
   static async getCompaniesByCountry(country: string, limit: number = 50): Promise<Company[]> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return []
+      }
+      
       const { data, error } = await supabase
         .from('companies')
         .select('*')
@@ -55,6 +65,11 @@ export class CompanyService {
    */
   static async getCompaniesByIndustry(industry: string, limit: number = 50): Promise<Company[]> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return []
+      }
+      
       const { data, error } = await supabase
         .from('companies')
         .select('*')
@@ -85,6 +100,11 @@ export class CompanyService {
     logo_url?: string
   }): Promise<Company> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        throw new Error('Supabase client not initialized')
+      }
+      
       const { data, error } = await supabase
         .from('companies')
         .insert([companyData])
@@ -108,6 +128,11 @@ export class CompanyService {
    */
   static async getCompanyByName(name: string): Promise<Company | null> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return null
+      }
+      
       const { data, error } = await supabase
         .from('companies')
         .select('*')
@@ -160,6 +185,11 @@ export class CompanyService {
    */
   static async getPopularCompanies(limit: number = 20): Promise<Company[]> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return []
+      }
+      
       // For now, return companies from USA and Finland
       // In the future, this could be based on actual usage statistics
       const { data, error } = await supabase

@@ -4,6 +4,11 @@ import { Folder, FolderFormData } from './supabase'
 export class FolderService {
   static async getFolders(userId: string): Promise<Folder[]> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return []
+      }
+      
       const { data, error } = await supabase
         .from('folders')
         .select('*')
@@ -23,6 +28,11 @@ export class FolderService {
 
   static async getFolder(id: string, userId: string): Promise<Folder> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        throw new Error('Supabase client not initialized')
+      }
+      
       const { data, error } = await supabase
         .from('folders')
         .select('*')
@@ -43,6 +53,11 @@ export class FolderService {
 
   static async createFolder(folderData: FolderFormData, userId: string): Promise<Folder> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        throw new Error('Supabase client not initialized')
+      }
+      
       const { data, error } = await supabase
         .from('folders')
         .insert([{
@@ -72,6 +87,11 @@ export class FolderService {
     userId: string
   ): Promise<Folder> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        throw new Error('Supabase client not initialized')
+      }
+      
       const { data, error } = await supabase
         .from('folders')
         .update(updates)
@@ -93,6 +113,11 @@ export class FolderService {
 
   static async deleteFolder(id: string, userId: string): Promise<void> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+      
       // First, move all documents in this folder to root (null folder_id)
       const { error: updateError } = await supabase
         .from('documents')

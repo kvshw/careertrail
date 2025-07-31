@@ -8,6 +8,11 @@ export class DocumentService {
     userId: string
   ): Promise<Document> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        throw new Error('Supabase client not initialized')
+      }
+      
       // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         throw new Error('File size must be less than 10MB')
@@ -83,6 +88,11 @@ export class DocumentService {
 
   static async getDocuments(userId: string, jobId?: string): Promise<Document[]> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return []
+      }
+      
       let query = supabase
         .from('documents')
         .select('*')
@@ -109,6 +119,11 @@ export class DocumentService {
 
   static async getDocument(id: string, userId: string): Promise<Document> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        throw new Error('Supabase client not initialized')
+      }
+      
       const { data, error } = await supabase
         .from('documents')
         .select('*')
@@ -134,6 +149,11 @@ export class DocumentService {
     userId: string
   ): Promise<Document> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        throw new Error('Supabase client not initialized')
+      }
+      
       const { data, error } = await supabase
         .from('documents')
         .update(updates)
@@ -155,6 +175,11 @@ export class DocumentService {
 
   static async deleteDocument(id: string, userId: string): Promise<void> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+      
       // Get document to get file path
       const document = await this.getDocument(id, userId)
 
@@ -185,6 +210,11 @@ export class DocumentService {
 
   static async getDownloadUrl(filePath: string): Promise<string> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        throw new Error('Supabase client not initialized')
+      }
+      
       const { data } = supabase.storage
         .from('documents')
         .getPublicUrl(filePath)
@@ -201,6 +231,11 @@ export class DocumentService {
     category: Document['category']
   ): Promise<Document[]> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return []
+      }
+      
       const { data, error } = await supabase
         .from('documents')
         .select('*')

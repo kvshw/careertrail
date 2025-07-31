@@ -78,6 +78,11 @@ export default function MetricsDashboard({ jobs, onError }: MetricsDashboardProp
         .slice(0, 5)
 
       // Fetch recent activities
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+      
       const { data: activities, error } = await supabase
         .from('job_activities')
         .select('*')

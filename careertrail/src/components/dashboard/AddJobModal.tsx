@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { JobFormData } from '@/lib/supabase'
 import CompanySearch from '@/components/ui/CompanySearch'
 import { CompanyService } from '@/lib/companies'
@@ -27,6 +27,8 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
   const [isParsingLinkedIn, setIsParsingLinkedIn] = useState(false)
   const [linkedInStatus, setLinkedInStatus] = useState<'idle' | 'parsing' | 'success' | 'error' | 'info'>('idle')
   const [linkedInMessage, setLinkedInMessage] = useState('')
+  const [extractionStep, setExtractionStep] = useState(0)
+  const [extractionProgress, setExtractionProgress] = useState(0)
   const [extractedData, setExtractedData] = useState<{
     company: string
     role: string
@@ -93,6 +95,14 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
       console.error('Error saving form data:', error)
     }
   }, [formData])
+
+  // Reset animation state when URL changes
+  useEffect(() => {
+    if (!formData.link || !isValidLinkedInJobUrl(formData.link)) {
+      setExtractionStep(0)
+      setExtractionProgress(0)
+    }
+  }, [formData.link])
 
   // Save LinkedIn extraction state to localStorage whenever it changes
   useEffect(() => {
@@ -163,6 +173,9 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
       setIsParsingLinkedIn(true)
       setLinkedInStatus('parsing')
       setLinkedInMessage('AI-powered extraction in progress... This may take 10-15 seconds as we bypass LinkedIn\'s security measures.')
+      
+      // Start the animated progress
+      const animationInterval = startExtractionAnimation()
       
       try {
         const response = await fetch('/api/linkedin-job', {
@@ -242,6 +255,10 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
         setLinkedInMessage('LinkedIn processing failed. Please fill in job details manually.')
       } finally {
         setIsParsingLinkedIn(false)
+        // Clear any remaining animation interval
+        if (animationInterval) {
+          clearInterval(animationInterval)
+        }
       }
     } else {
       setLinkedInStatus('idle')
@@ -277,6 +294,15 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
     }
   }
 
+  const extractionSteps = [
+    { id: 0, title: 'Connecting to LinkedIn', description: 'Establishing secure connection...', icon: '🔗' },
+    { id: 1, title: 'Bypassing Security', description: 'Navigating LinkedIn\'s protection...', icon: '🛡️' },
+    { id: 2, title: 'Extracting Job Data', description: 'Parsing job details and requirements...', icon: '📄' },
+    { id: 3, title: 'Analyzing Content', description: 'Processing job description and requirements...', icon: '🔍' },
+    { id: 4, title: 'AI Processing', description: 'Using AI to extract key information...', icon: '🤖' },
+    { id: 5, title: 'Finalizing Data', description: 'Preparing extracted information...', icon: '✨' }
+  ]
+
   const getLinkedInIcon = () => {
     switch (linkedInStatus) {
       case 'success': return (
@@ -300,6 +326,36 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
         </svg>
       )
     }
+  }
+
+  const startExtractionAnimation = () => {
+    setExtractionStep(0)
+    setExtractionProgress(0)
+    
+    const stepDuration = 2000 // 2 seconds per step
+    const totalSteps = extractionSteps.length
+    
+    const interval = setInterval(() => {
+      setExtractionStep(prev => {
+        const nextStep = prev + 1
+        if (nextStep >= totalSteps) {
+          clearInterval(interval)
+          return prev
+        }
+        return nextStep
+      })
+      
+      setExtractionProgress(prev => {
+        const newProgress = ((prev + 1) / totalSteps) * 100
+        if (newProgress >= 100) {
+          clearInterval(interval)
+          return 100
+        }
+        return newProgress
+      })
+    }, stepDuration)
+    
+    return interval
   }
 
   return (
@@ -342,28 +398,86 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
                 Paste a LinkedIn job URL to automatically extract job details
               </p>
               
-              {/* LinkedIn Status Display */}
+              {/* Enhanced LinkedIn Status Display */}
               {formData.link && isValidLinkedInJobUrl(formData.link) && (
                 <div className={`mt-3 p-4 border rounded-xl ${getLinkedInStatusColor()}`}>
-                  <div className="flex items-start space-x-3">
-                    {getLinkedInIcon()}
-                    <div className="flex-1">
-                      <div className="text-sm font-medium mb-1">
-                        {linkedInStatus === 'success' ? '✅ LinkedIn Job Details Extracted!' : 
-                         linkedInStatus === 'error' ? '❌ LinkedIn Detection Failed' :
-                         linkedInStatus === 'info' ? 'ℹ️ LinkedIn Job Detected' :
-                         '🔄 Processing LinkedIn URL...'}
+                  {isParsingLinkedIn ? (
+                    <div className="space-y-4">
+                      {/* Progress Bar */}
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500 ease-out"
+                          style={{ width: `${extractionProgress}%` }}
+                        ></div>
                       </div>
-                      <div className="text-sm text-current">
-                        {linkedInMessage || 'Attempting to extract job details automatically...'}
-                      </div>
-                      {linkedInStatus === 'idle' && (
-                        <div className="text-current mt-1 text-xs">
-                          Job ID: {formData.link.split('/').pop()?.split('?')[0]}
+                      
+                      {/* Current Step */}
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold animate-pulse">
+                            {extractionSteps[extractionStep]?.icon || '🔄'}
+                          </div>
                         </div>
-                      )}
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">
+                            {extractionSteps[extractionStep]?.title || 'Processing...'}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {extractionSteps[extractionStep]?.description || 'Please wait...'}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Progress Steps */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {extractionSteps.map((step, index) => (
+                          <div 
+                            key={step.id}
+                            className={`text-xs p-2 rounded-lg text-center transition-all duration-300 ${
+                              index <= extractionStep 
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' 
+                                : 'bg-gray-100 text-gray-500'
+                            }`}
+                          >
+                            <div className="font-medium">{step.icon}</div>
+                            <div className="truncate">{step.title}</div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Fun Facts */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div className="text-xs text-blue-800">
+                          <div className="font-medium mb-1">💡 Did you know?</div>
+                          <div className="space-y-1">
+                            <div>• We&apos;re bypassing LinkedIn&apos;s advanced security measures</div>
+                            <div>• AI is analyzing the job description for key details</div>
+                            <div>• This process saves you 5-10 minutes of manual data entry</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex items-start space-x-3">
+                      {getLinkedInIcon()}
+                      <div className="flex-1">
+                        <div className="text-sm font-medium mb-1">
+                          {linkedInStatus === 'success' ? '✅ LinkedIn Job Details Extracted!' : 
+                           linkedInStatus === 'error' ? '❌ LinkedIn Detection Failed' :
+                           linkedInStatus === 'info' ? 'ℹ️ LinkedIn Job Detected' :
+                           '🔄 Processing LinkedIn URL...'}
+                        </div>
+                        <div className="text-sm text-current">
+                          {linkedInMessage || 'Attempting to extract job details automatically...'}
+                        </div>
+                        {linkedInStatus === 'idle' && (
+                          <div className="text-current mt-1 text-xs">
+                            Job ID: {formData.link.split('/').pop()?.split('?')[0]}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

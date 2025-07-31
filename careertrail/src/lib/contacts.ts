@@ -4,6 +4,11 @@ import { Contact, ContactFormData, ContactInteraction, ContactInteractionFormDat
 export class ContactService {
   // Contact CRUD operations
   static async getContacts(userId: string): Promise<Contact[]> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return []
+    }
+    
     const { data, error } = await supabase
       .from('contacts')
       .select('*')
@@ -18,6 +23,11 @@ export class ContactService {
   }
 
   static async getContact(id: string, userId: string): Promise<Contact> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from('contacts')
       .select('*')
@@ -33,6 +43,11 @@ export class ContactService {
   }
 
   static async createContact(contactData: ContactFormData, userId: string): Promise<Contact> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from('contacts')
       .insert([{ ...contactData, user_id: userId }])
@@ -47,6 +62,11 @@ export class ContactService {
   }
 
   static async updateContact(id: string, updates: Partial<ContactFormData>, userId: string): Promise<Contact> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from('contacts')
       .update(updates)
@@ -63,6 +83,11 @@ export class ContactService {
   }
 
   static async deleteContact(id: string, userId: string): Promise<void> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return
+    }
+    
     const { error } = await supabase
       .from('contacts')
       .delete()
@@ -76,6 +101,11 @@ export class ContactService {
 
   // Contact Interaction operations
   static async getContactInteractions(contactId: string, userId: string): Promise<ContactInteraction[]> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return []
+    }
+    
     const { data, error } = await supabase
       .from('contact_interactions')
       .select('*')
@@ -91,6 +121,11 @@ export class ContactService {
   }
 
   static async getAllContactInteractions(userId: string): Promise<ContactInteraction[]> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return []
+    }
+    
     const { data, error } = await supabase
       .from('contact_interactions')
       .select('*')
@@ -105,6 +140,11 @@ export class ContactService {
   }
 
   static async createInteraction(interactionData: ContactInteractionFormData, userId: string): Promise<ContactInteraction> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     // Clean up the data before sending to database
     const cleanedData = {
       ...interactionData,
@@ -127,6 +167,11 @@ export class ContactService {
   }
 
   static async updateInteraction(id: string, updates: Partial<ContactInteractionFormData>, userId: string): Promise<ContactInteraction> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     // Clean up the data before sending to database
     const cleanedUpdates = {
       ...updates,
@@ -150,6 +195,11 @@ export class ContactService {
   }
 
   static async deleteInteraction(id: string, userId: string): Promise<void> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return
+    }
+    
     const { error } = await supabase
       .from('contact_interactions')
       .delete()
@@ -163,6 +213,11 @@ export class ContactService {
 
   // Contact Job Relationship operations
   static async getContactJobs(contactId: string): Promise<ContactJob[]> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return []
+    }
+    
     const { data, error } = await supabase
       .from('contact_jobs')
       .select(`
@@ -184,6 +239,11 @@ export class ContactService {
   }
 
   static async createContactJob(contactJobData: ContactJobFormData): Promise<ContactJob> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from('contact_jobs')
       .insert([contactJobData])
@@ -198,6 +258,11 @@ export class ContactService {
   }
 
   static async deleteContactJob(id: string): Promise<void> {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return
+    }
+    
     const { error } = await supabase
       .from('contact_jobs')
       .delete()
