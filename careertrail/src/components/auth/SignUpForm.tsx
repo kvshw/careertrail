@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function SignUpForm() {
   const [email, setEmail] = useState('')
@@ -61,7 +62,7 @@ export default function SignUpForm() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 relative">
       {/* Back Button - Fixed to top-left corner */}
       <div className="absolute top-6 left-6 z-10">
-        <a
+        <Link
           href="/"
           className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors duration-200 group bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm hover:shadow-md"
         >
@@ -69,7 +70,7 @@ export default function SignUpForm() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to Home
-        </a>
+        </Link>
       </div>
       
       <div className="flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">

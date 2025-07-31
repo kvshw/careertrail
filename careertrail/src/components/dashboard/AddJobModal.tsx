@@ -208,35 +208,41 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
           notes: jobData.description ? `${jobData.description}\n\n${prev.notes || ''}`.trim() : prev.notes
         }))
         
-        // Show appropriate message based on what was extracted
+        // Complete the progress bar to 100% immediately when data arrives
+        setExtractionProgress(100)
+        
+        // Show success message immediately when data arrives
         if (jobData.company && jobData.role && jobData.role !== 'Job from LinkedIn') {
           setLinkedInStatus('success')
           setLinkedInMessage(`Successfully extracted job details! Company: ${jobData.company}, Role: ${jobData.role}${jobData.location ? `, Location: ${jobData.location}` : ''}`)
           
           // Check if company exists in database and prompt creation if needed
           if (jobData.company) {
-            try {
-              // Search for the company in the database
-              const existingCompanies = await CompanyService.searchCompanies(jobData.company, 1)
-              const companyExists = existingCompanies.some(company => 
-                company.name.toLowerCase() === jobData.company.toLowerCase()
-              )
-              
-              if (!companyExists) {
-                // Company doesn't exist, show creation prompt
-                setPendingCompanyName(jobData.company)
-                setShowCompanyCreationPrompt(true)
-              } else {
-                // Company exists, don't show prompt
+            // Use setTimeout to handle async operation
+            setTimeout(async () => {
+              try {
+                // Search for the company in the database
+                const existingCompanies = await CompanyService.searchCompanies(jobData.company, 1)
+                const companyExists = existingCompanies.some(company => 
+                  company.name.toLowerCase() === jobData.company.toLowerCase()
+                )
+                
+                if (!companyExists) {
+                  // Company doesn't exist, show creation prompt
+                  setPendingCompanyName(jobData.company)
+                  setShowCompanyCreationPrompt(true)
+                } else {
+                  // Company exists, don't show prompt
+                  setShowCompanyCreationPrompt(false)
+                  setPendingCompanyName('')
+                }
+              } catch (error) {
+                console.error('Error checking if company exists:', error)
+                // If there's an error checking, don't show the prompt to be safe
                 setShowCompanyCreationPrompt(false)
                 setPendingCompanyName('')
               }
-            } catch (error) {
-              console.error('Error checking if company exists:', error)
-              // If there's an error checking, don't show the prompt to be safe
-              setShowCompanyCreationPrompt(false)
-              setPendingCompanyName('')
-            }
+            }, 0)
           }
         } else if (jobData.role && jobData.role !== 'Job from LinkedIn') {
           setLinkedInStatus('success')
@@ -246,19 +252,33 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
           setLinkedInMessage('LinkedIn job detected. AI extraction attempted but LinkedIn\'s advanced security measures prevented full automation. Please fill in the remaining details manually.')
         }
         
+        // Stop the animation after showing success for a moment
+        setTimeout(() => {
+          setIsParsingLinkedIn(false)
+          // Clear any remaining animation interval
+          if (animationInterval) {
+            clearInterval(animationInterval)
+          }
+        }, 2000) // Show success state for 2 seconds
+        
         console.log('LinkedIn job processing completed:', jobData)
         
       } catch (error) {
         console.error('Error processing LinkedIn URL:', error)
         
+        // Complete progress bar and show error immediately
+        setExtractionProgress(100)
         setLinkedInStatus('error')
         setLinkedInMessage('LinkedIn processing failed. Please fill in job details manually.')
-      } finally {
-        setIsParsingLinkedIn(false)
-        // Clear any remaining animation interval
-        if (animationInterval) {
-          clearInterval(animationInterval)
-        }
+        
+        // Stop the animation after showing error for a moment
+        setTimeout(() => {
+          setIsParsingLinkedIn(false)
+          // Clear any remaining animation interval
+          if (animationInterval) {
+            clearInterval(animationInterval)
+          }
+        }, 2000) // Show error state for 2 seconds
       }
     } else {
       setLinkedInStatus('idle')
@@ -334,25 +354,21 @@ export default function AddJobModal({ onClose, onSubmit }: AddJobModalProps) {
     
     const stepDuration = 2000 // 2 seconds per step
     const totalSteps = extractionSteps.length
+    let currentStep = 0
     
     const interval = setInterval(() => {
-      setExtractionStep(prev => {
-        const nextStep = prev + 1
-        if (nextStep >= totalSteps) {
-          clearInterval(interval)
-          return prev
-        }
-        return nextStep
-      })
+      currentStep += 1
       
-      setExtractionProgress(prev => {
-        const newProgress = ((prev + 1) / totalSteps) * 100
-        if (newProgress >= 100) {
-          clearInterval(interval)
-          return 100
-        }
-        return newProgress
-      })
+      setExtractionStep(currentStep)
+      
+      // Stop at 95% progress and wait for data
+      const newProgress = Math.min((currentStep / totalSteps) * 100, 95)
+      setExtractionProgress(newProgress)
+      
+      if (currentStep >= totalSteps) {
+        clearInterval(interval)
+        // Animation stops at 95%, waiting for data to arrive
+      }
     }, stepDuration)
     
     return interval
