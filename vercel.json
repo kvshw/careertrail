@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd careertrail && npm run build",
+  "outputDirectory": "careertrail/.next",
+  "installCommand": "cd careertrail && npm install",
+  "framework": "nextjs",
+  "rootDirectory": "careertrail"
+} 
