@@ -1,11 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Job, JobMetrics, JobActivity } from '@/lib/supabase'
+import { Job, JobMetrics } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+
+// Define a unified activity interface
+interface RecentActivity {
+  id: string
+  type: 'job' | 'document' | 'contact' | 'interview' | 'status_change'
+  title: string
+  description: string
+  timestamp: string
+  icon: string
+  color: string
+  metadata?: any
+}
 
 interface MetricsDashboardProps {
   jobs: Job[]
@@ -15,11 +27,13 @@ interface MetricsDashboardProps {
 export default function MetricsDashboard({ jobs, onError }: MetricsDashboardProps) {
   const { user } = useAuth()
   const [metrics, setMetrics] = useState<JobMetrics | null>(null)
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (user && jobs.length > 0) {
+    if (user) {
       calculateMetrics()
+      fetchRecentActivities()
     } else {
       setLoading(false)
     }
@@ -115,6 +129,116 @@ export default function MetricsDashboard({ jobs, onError }: MetricsDashboardProp
     }
   }
 
+  const fetchRecentActivities = async () => {
+    if (!supabase || !user) return
+
+    try {
+      const activities: RecentActivity[] = []
+
+      // Fetch recent jobs
+      const { data: recentJobs } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      if (recentJobs) {
+        recentJobs.forEach(job => {
+          activities.push({
+            id: `job-${job.id}`,
+            type: 'job',
+            title: `Applied to ${job.role}`,
+            description: `at ${job.company}`,
+            timestamp: job.created_at,
+            icon: '💼',
+            color: 'blue',
+            metadata: job
+          })
+        })
+      }
+
+      // Fetch recent documents
+      const { data: recentDocuments } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      if (recentDocuments) {
+        recentDocuments.forEach(doc => {
+          activities.push({
+            id: `doc-${doc.id}`,
+            type: 'document',
+            title: `Uploaded ${doc.name}`,
+            description: `${doc.category} document`,
+            timestamp: doc.created_at,
+            icon: '📄',
+            color: 'green',
+            metadata: doc
+          })
+        })
+      }
+
+      // Fetch recent contacts
+      const { data: recentContacts } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      if (recentContacts) {
+        recentContacts.forEach(contact => {
+          activities.push({
+            id: `contact-${contact.id}`,
+            type: 'contact',
+            title: `Added ${contact.first_name} ${contact.last_name}`,
+            description: `${contact.role || 'Contact'} at ${contact.company || 'Unknown Company'}`,
+            timestamp: contact.created_at,
+            icon: '👤',
+            color: 'purple',
+            metadata: contact
+          })
+        })
+      }
+
+      // Fetch recent interviews
+      const { data: recentInterviews } = await supabase
+        .from('interviews')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      if (recentInterviews) {
+        recentInterviews.forEach(interview => {
+          activities.push({
+            id: `interview-${interview.id}`,
+            type: 'interview',
+            title: `Scheduled ${interview.title}`,
+            description: `${interview.interview_type} interview`,
+            timestamp: interview.created_at,
+            icon: '📅',
+            color: 'orange',
+            metadata: interview
+          })
+        })
+      }
+
+      // Sort all activities by timestamp and take the most recent 10
+      const sortedActivities = activities
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 10)
+
+      setRecentActivities(sortedActivities)
+    } catch (error) {
+      console.error('Error fetching recent activities:', error)
+      onError?.('Failed to load recent activities')
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -153,14 +277,19 @@ export default function MetricsDashboard({ jobs, onError }: MetricsDashboardProp
     }
   }
 
-  const getActivityIcon = (activityType: string) => {
-    switch (activityType) {
-      case 'applied': return '📝'
-      case 'interview_scheduled': return '📅'
-      case 'interview_completed': return '✅'
-      case 'offer_received': return '🎉'
-      case 'rejected': return '❌'
-      default: return '📋'
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) {
+      return 'Just now'
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`
+    } else if (diffInHours < 48) {
+      return 'Yesterday'
+    } else {
+      return date.toLocaleDateString()
     }
   }
 
@@ -284,20 +413,28 @@ export default function MetricsDashboard({ jobs, onError }: MetricsDashboardProp
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            {metrics.recentActivity.length > 0 ? (
+            {recentActivities.length > 0 ? (
               <div className="space-y-4">
-                {metrics.recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-xl">
-                    <span className="text-lg">{getActivityIcon(activity.activity_type)}</span>
+                {recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      activity.color === 'blue' && "bg-blue-100",
+                      activity.color === 'green' && "bg-green-100", 
+                      activity.color === 'purple' && "bg-purple-100",
+                      activity.color === 'orange' && "bg-orange-100"
+                    )}>
+                      <span className="text-lg">{activity.icon}</span>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900">
-                        {activity.activity_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        {activity.title}
                       </p>
-                      {activity.description && (
-                        <p className="text-sm text-gray-500 truncate">{activity.description}</p>
-                      )}
+                      <p className="text-sm text-gray-500 truncate">
+                        {activity.description}
+                      </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {new Date(activity.activity_date).toLocaleDateString()}
+                        {formatTimestamp(activity.timestamp)}
                       </p>
                     </div>
                   </div>
