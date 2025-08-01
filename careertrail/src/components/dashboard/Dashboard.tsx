@@ -299,7 +299,7 @@ export default function Dashboard() {
       }
 
       if (data) {
-        setJobs([data[0], ...jobs])
+        // Don't update state optimistically - let real-time subscription handle it
         setShowAddModal(false)
         handleSuccess('Job added successfully!')
       }
@@ -336,7 +336,7 @@ export default function Dashboard() {
             throw error
           }
 
-          setJobs(jobs.filter(job => job.id !== id))
+          // Don't update state optimistically - let real-time subscription handle it
           handleSuccess('Job deleted successfully!')
         } catch (error) {
           console.error('Error deleting job:', error)
@@ -376,7 +376,8 @@ export default function Dashboard() {
       }
       
       if (data && data.length > 0) {
-        setJobs(jobs.map(job => job.id === id ? data[0] : job))
+        // Don't update state optimistically - let real-time subscription handle it
+        handleSuccess('Job updated successfully!')
       } else {
         throw new Error('No data returned from update')
       }
@@ -392,8 +393,8 @@ export default function Dashboard() {
         throw new Error('User not authenticated')
       }
 
-      const document = await DocumentService.uploadDocument(file, documentData, user.id)
-      setDocuments([document, ...documents])
+      await DocumentService.uploadDocument(file, documentData, user.id)
+      // Don't update state optimistically - let real-time subscription handle it
       setShowDocumentUpload(false)
       handleSuccess('Document uploaded successfully!')
     } catch (error) {
@@ -429,7 +430,7 @@ export default function Dashboard() {
             throw error
           }
 
-          setDocuments(documents.filter(doc => doc.id !== id))
+          // Don't update state optimistically - let real-time subscription handle it
           handleSuccess('Document deleted successfully!')
         } catch (error) {
           console.error('Error deleting document:', error)
@@ -463,7 +464,7 @@ export default function Dashboard() {
             throw error
           }
 
-          setDocuments(documents.filter(doc => doc.id !== id))
+          // Don't update state optimistically - let real-time subscription handle it
           handleSuccess('Document deleted successfully!')
         } catch (error) {
           console.error('Error deleting document:', error)
@@ -497,7 +498,7 @@ export default function Dashboard() {
         throw error
       }
 
-      setDocuments(documents.map(doc => doc.id === id ? data : doc))
+      // Don't update state optimistically - let real-time subscription handle it
       handleSuccess('Document updated successfully!')
     } catch (error) {
       console.error('Error updating document:', error)
