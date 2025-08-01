@@ -1,13 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { Document, DocumentFormData } from '@/lib/supabase'
+import { Document, DocumentFormData, Job, Folder } from '@/lib/supabase'
 import { DocumentService } from '@/lib/documents'
+import { FolderService } from '@/lib/folders'
 import { cn } from '@/lib/utils'
 import DocumentEditModal from './DocumentEditModal'
 
 interface DocumentListProps {
   documents: Document[]
+  jobs: Job[]
+  folders: Folder[]
   selectedFolderId: string | null
   onDelete: (id: string) => Promise<void>
   onUpdate: (id: string, updates: Partial<DocumentFormData>) => Promise<void>
@@ -19,6 +22,8 @@ interface DocumentListProps {
 
 export default function DocumentList({ 
   documents, 
+  jobs,
+  folders,
   selectedFolderId,
   onDelete, 
   onUpdate,
@@ -178,6 +183,42 @@ export default function DocumentList({
                 <p className="text-sm text-gray-600 line-clamp-2">{document.description}</p>
               )}
               
+              {/* Linked Job Information */}
+              {document.job_id && (() => {
+                const linkedJob = jobs.find(job => job.id === document.job_id)
+                return linkedJob ? (
+                  <div className="flex items-center space-x-2 p-2 bg-blue-50 rounded-lg border border-blue-200/50">
+                    <span className="text-blue-600 text-sm">💼</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-blue-900 truncate">
+                        {linkedJob.company}
+                      </p>
+                      <p className="text-xs text-blue-700 truncate">
+                        {linkedJob.role} ({linkedJob.status})
+                      </p>
+                    </div>
+                  </div>
+                ) : null
+              })()}
+              
+              {/* Folder Information */}
+              {document.folder_id && (() => {
+                const linkedFolder = folders.find(folder => folder.id === document.folder_id)
+                return linkedFolder ? (
+                  <div className="flex items-center space-x-2 p-2 bg-green-50 rounded-lg border border-green-200/50">
+                    <span className="text-green-600 text-sm">{FolderService.getFolderIcon(linkedFolder.color)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-green-900 truncate">
+                        {linkedFolder.name}
+                      </p>
+                      <p className="text-xs text-green-700 truncate">
+                        Folder
+                      </p>
+                    </div>
+                  </div>
+                ) : null
+              })()}
+              
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span>{DocumentService.formatFileSize(document.file_size)}</span>
                 <span>{new Date(document.created_at).toLocaleDateString()}</span>
@@ -206,6 +247,8 @@ export default function DocumentList({
       {editingDocument && (
         <DocumentEditModal
           document={editingDocument}
+          jobs={jobs}
+          folders={folders}
           onClose={() => setEditingDocument(null)}
           onUpdate={onUpdate}
           onError={onError}

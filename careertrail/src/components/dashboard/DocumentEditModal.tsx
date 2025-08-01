@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Document, DocumentFormData } from '@/lib/supabase'
+import { Document, DocumentFormData, Job, Folder } from '@/lib/supabase'
 import { DocumentService } from '@/lib/documents'
+import { FolderService } from '@/lib/folders'
 
 interface DocumentEditModalProps {
   document: Document
+  jobs: Job[]
+  folders: Folder[]
   onClose: () => void
   onUpdate: (id: string, updates: Partial<DocumentFormData>) => Promise<void>
   onError: (message: string) => void
@@ -14,6 +17,8 @@ interface DocumentEditModalProps {
 
 export default function DocumentEditModal({
   document,
+  jobs,
+  folders,
   onClose,
   onUpdate,
   onError,
@@ -23,7 +28,8 @@ export default function DocumentEditModal({
     name: document.name,
     description: document.description || '',
     category: document.category,
-    job_id: document.job_id || undefined
+    job_id: document.job_id || undefined,
+    folder_id: document.folder_id || undefined
   })
   const [isUpdating, setIsUpdating] = useState(false)
 
@@ -130,6 +136,54 @@ export default function DocumentEditModal({
                 rows={3}
                 className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-colors resize-none"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Link to Job Application (Optional)
+              </label>
+              <select
+                value={formData.job_id || ''}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  job_id: e.target.value || undefined 
+                }))}
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 transition-colors"
+              >
+                <option value="">💼 No job linked</option>
+                {jobs.map(job => (
+                  <option key={job.id} value={job.id}>
+                    🏢 {job.company} - {job.role} ({job.status})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Link this document to a specific job application for easy reference
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Folder
+              </label>
+              <select
+                value={formData.folder_id || ''}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  folder_id: e.target.value || undefined 
+                }))}
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 transition-colors"
+              >
+                <option value="">📁 Root folder (No folder)</option>
+                {folders.map(folder => (
+                  <option key={folder.id} value={folder.id}>
+                    {FolderService.getFolderIcon(folder.color)} {folder.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Move this document to a different folder for better organization
+              </p>
             </div>
 
             <div className="flex space-x-3 pt-4">

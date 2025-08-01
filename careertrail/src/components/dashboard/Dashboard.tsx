@@ -954,6 +954,8 @@ export default function Dashboard() {
             <div className="lg:col-span-3">
               <DocumentList
                 documents={documents}
+                jobs={jobs}
+                folders={folders}
                 selectedFolderId={selectedFolderId}
                 onDelete={handleDeleteDocument}
                 onUpdate={handleUpdateDocument}
@@ -1179,6 +1181,7 @@ export default function Dashboard() {
               </div>
               <DocumentUpload
                 folders={folders}
+                jobs={jobs}
                 onUpload={handleUploadDocument}
                 onCreateFolder={handleCreateFolder}
                 onError={handleError}

@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { DocumentFormData, Folder, FolderFormData } from '@/lib/supabase'
+import { DocumentFormData, Folder, FolderFormData, Job } from '@/lib/supabase'
 import { FolderService } from '@/lib/folders'
 import { cn } from '@/lib/utils'
 
 interface DocumentUploadProps {
   folders: Folder[]
+  jobs: Job[]
   onUpload: (file: File, documentData: DocumentFormData) => Promise<void>
   onCreateFolder?: (folderData: FolderFormData) => Promise<Folder>
   onError: (message: string) => void
@@ -16,6 +17,7 @@ interface DocumentUploadProps {
 
 export default function DocumentUpload({ 
   folders,
+  jobs,
   onUpload, 
   onCreateFolder,
   onError, 
@@ -302,6 +304,30 @@ export default function DocumentUpload({
                 + Create New Folder
               </button>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Link to Job Application (Optional)
+            </label>
+            <select
+              value={documentData.job_id || ''}
+              onChange={(e) => setDocumentData(prev => ({ 
+                ...prev, 
+                job_id: e.target.value || undefined 
+              }))}
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 transition-colors"
+            >
+              <option value="">💼 No job linked</option>
+              {jobs.map(job => (
+                <option key={job.id} value={job.id}>
+                  🏢 {job.company} - {job.role} ({job.status})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Link this document to a specific job application for easy reference
+            </p>
           </div>
 
           <div>
