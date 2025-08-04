@@ -127,7 +127,7 @@ export default function DocumentList({
             className="bg-white rounded-xl border border-gray-200/50 p-4 shadow-sm hover:shadow-md transition-all duration-200"
           >
             <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
                 <div className="flex-shrink-0 h-10 w-10">
                   <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                     <span className="text-white text-lg">
@@ -135,9 +135,9 @@ export default function DocumentList({
                     </span>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-gray-900 truncate">{document.name}</h4>
-                  <p className="text-sm text-gray-600">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <h4 className="font-semibold text-gray-900 truncate break-words">{document.name}</h4>
+                  <p className="text-sm text-gray-600 truncate">
                     {DocumentService.getCategoryLabel(document.category)}
                   </p>
                 </div>

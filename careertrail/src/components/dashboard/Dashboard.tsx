@@ -393,8 +393,9 @@ export default function Dashboard() {
         throw new Error('User not authenticated')
       }
 
-      await DocumentService.uploadDocument(file, documentData, user.id)
-      // Don't update state optimistically - let real-time subscription handle it
+      const document = await DocumentService.uploadDocument(file, documentData, user.id)
+      // Add optimistic update for immediate feedback
+      setDocuments(prev => [document, ...prev])
       setShowDocumentUpload(false)
       handleSuccess('Document uploaded successfully!')
     } catch (error) {
@@ -430,7 +431,8 @@ export default function Dashboard() {
             throw error
           }
 
-          // Don't update state optimistically - let real-time subscription handle it
+          // Add optimistic update for immediate feedback
+          setDocuments(prev => prev.filter(doc => doc.id !== id))
           handleSuccess('Document deleted successfully!')
         } catch (error) {
           console.error('Error deleting document:', error)
@@ -464,7 +466,8 @@ export default function Dashboard() {
             throw error
           }
 
-          // Don't update state optimistically - let real-time subscription handle it
+          // Add optimistic update for immediate feedback
+          setDocuments(prev => prev.filter(doc => doc.id !== id))
           handleSuccess('Document deleted successfully!')
         } catch (error) {
           console.error('Error deleting document:', error)
@@ -498,7 +501,8 @@ export default function Dashboard() {
         throw error
       }
 
-      // Don't update state optimistically - let real-time subscription handle it
+      // Add optimistic update for immediate feedback
+      setDocuments(prev => prev.map(doc => doc.id === id ? data : doc))
       handleSuccess('Document updated successfully!')
     } catch (error) {
       console.error('Error updating document:', error)
