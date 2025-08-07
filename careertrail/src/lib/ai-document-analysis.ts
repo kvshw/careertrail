@@ -1,8 +1,21 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Only create OpenAI client on server-side
+const createOpenAIClient = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side: return null
+    return null
+  }
+  
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY environment variable is required')
+  }
+  
+  return new OpenAI({
+    apiKey,
+  })
+}
 
 export interface DocumentAnalysisResult {
   score: number // 0-100
@@ -94,6 +107,11 @@ Be specific, constructive, and provide actionable advice based on 2024 hiring st
   static async analyzeDocument(request: DocumentAnalysisRequest): Promise<DocumentAnalysisResult> {
     try {
       const prompt = this.getAnalysisPrompt(request)
+      
+      const openai = createOpenAIClient()
+      if (!openai) {
+        throw new Error('OpenAI client not available on client-side')
+      }
       
       const completion = await openai.chat.completions.create({
         model: "gpt-4-turbo-preview",
