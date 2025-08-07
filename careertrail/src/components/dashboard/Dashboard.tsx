@@ -25,6 +25,7 @@ import ContactInteractionModal from './ContactInteractionModal'
 import ContactTimeline from './ContactTimeline'
 import InterviewList from './InterviewList'
 import InterviewModal from './InterviewModal'
+import AIDocumentAnalysis from './AIDocumentAnalysis'
 import Toast from './Toast'
 import RealtimeStatus from '@/components/ui/RealtimeStatus'
 import ConfirmModal from '@/components/ui/ConfirmModal'
@@ -51,6 +52,7 @@ export default function Dashboard() {
   const [showInterviewModal, setShowInterviewModal] = useState(false)
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null)
   const [showContactModal, setShowContactModal] = useState(false)
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   
@@ -1063,6 +1065,17 @@ export default function Dashboard() {
           actions: (
             <div className="flex items-center gap-3">
               <Button
+                onClick={() => setShowAIAnalysis(true)}
+                variant="secondary"
+                icon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                }
+              >
+                🤖 AI Analysis
+              </Button>
+              <Button
                 onClick={() => setShowDocumentUpload(true)}
                 icon={
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1260,6 +1273,14 @@ export default function Dashboard() {
 
       {/* Real-time Status (for debugging) */}
       <RealtimeStatus getSubscriptionStatus={getSubscriptionStatus} />
+
+      {/* AI Document Analysis Modal */}
+      {showAIAnalysis && (
+        <AIDocumentAnalysis
+          jobs={jobs}
+          onClose={() => setShowAIAnalysis(false)}
+        />
+      )}
 
       {/* Confirmation Modal */}
       {confirmModal.isOpen && (
