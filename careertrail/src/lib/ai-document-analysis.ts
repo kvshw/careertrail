@@ -146,19 +146,9 @@ Be specific, constructive, and provide actionable advice based on 2024 hiring st
   }
 
   static async extractTextFromDocument(file: File): Promise<string> {
-    // For now, we'll handle text files and basic text extraction
-    // In a full implementation, you'd want to handle PDFs, DOCs, etc.
-    
-    if (file.type === 'text/plain') {
-      return await file.text()
-    }
-    
-    // For other file types, you might want to use a service like:
-    // - PDF.js for PDFs
-    // - mammoth.js for Word documents
-    // - Or a cloud service like Google Docs API
-    
-    throw new Error('File type not supported. Please upload a text file or convert your document to text.')
+    // Thin wrapper to keep existing imports stable; logic moved to client-only module
+    const { extractTextFromDocument } = await import('./document-text-extraction')
+    return extractTextFromDocument(file)
   }
 
   static getDocumentTypeFromFilename(filename: string): 'resume' | 'cover_letter' | 'other' {
