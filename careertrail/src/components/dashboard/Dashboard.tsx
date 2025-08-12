@@ -10,6 +10,7 @@ import { ContactService } from '@/lib/contacts'
 import { InterviewService } from '@/lib/interviews'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRealtimeState } from '@/hooks/useRealtimeState'
+import { logEnvironmentStatus, setupGlobalErrorHandling } from '@/lib/error-handling'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
@@ -26,6 +27,8 @@ import ContactTimeline from './ContactTimeline'
 import InterviewList from './InterviewList'
 import InterviewModal from './InterviewModal'
 import AIDocumentAnalysis from './AIDocumentAnalysis'
+import ApplicationOptimizer from './ApplicationOptimizer'
+import OptimizationHistoryModal from './OptimizationHistoryModal'
 import Toast from './Toast'
 import RealtimeStatus from '@/components/ui/RealtimeStatus'
 import ConfirmModal from '@/components/ui/ConfirmModal'
@@ -53,6 +56,11 @@ export default function Dashboard() {
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null)
   const [showContactModal, setShowContactModal] = useState(false)
   const [showAIAnalysis, setShowAIAnalysis] = useState(false)
+  const [aiPrefill, setAiPrefill] = useState<{ content?: string; documentType?: 'resume' | 'cover_letter' | 'other'; documentId?: string; initialAnalysis?: any } | null>(null)
+  const [showOptimizer, setShowOptimizer] = useState(false)
+  const [optimizerPrefill, setOptimizerPrefill] = useState<{ content?: string; contentType?: 'resume' | 'cover_letter'; jobDescription?: string; documentId?: string; documentName?: string } | null>(null)
+  const [showOptimizationHistory, setShowOptimizationHistory] = useState(false)
+  const [selectedDocumentForHistory, setSelectedDocumentForHistory] = useState<{ id: string; name: string } | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   
@@ -157,6 +165,12 @@ export default function Dashboard() {
       fetchContacts()
       fetchContactInteractions()
       fetchInterviews()
+      
+      // Log environment status for debugging runtime.lastError issues
+      logEnvironmentStatus()
+      
+      // Setup global error handling to suppress runtime.lastError
+      setupGlobalErrorHandling()
     }
   }, [user])
 
@@ -968,6 +982,18 @@ export default function Dashboard() {
                 onError={handleError}
                 onSuccess={handleSuccess}
                 onConfirmDelete={handleConfirmDocumentDelete}
+                onAnalyzeRequest={(prefill) => {
+                  setAiPrefill(prefill || null)
+                  setShowAIAnalysis(true)
+                }}
+                onOptimizerRequest={(prefill) => {
+                  setOptimizerPrefill(prefill || null)
+                  setShowOptimizer(true)
+                }}
+                onViewOptimizations={(documentId, documentName) => {
+                  setSelectedDocumentForHistory({ id: documentId, name: documentName })
+                  setShowOptimizationHistory(true)
+                }}
               />
             </div>
           </div>
@@ -1203,6 +1229,13 @@ export default function Dashboard() {
                 onCreateFolder={handleCreateFolder}
                 onError={handleError}
                 onSuccess={handleSuccess}
+                onRequestAnalyze={(prefill) => {
+                  setAiPrefill(prefill ? {
+                    content: prefill.content,
+                    documentType: (prefill.documentType as any) || 'other'
+                  } : null)
+                  setShowAIAnalysis(true)
+                }}
               />
             </div>
           </div>
@@ -1279,6 +1312,39 @@ export default function Dashboard() {
         <AIDocumentAnalysis
           jobs={jobs}
           onClose={() => setShowAIAnalysis(false)}
+          initialContent={aiPrefill?.content}
+          initialDocumentType={aiPrefill?.documentType}
+          autoAnalyze={Boolean(aiPrefill?.content)}
+          userId={user?.id}
+          documentId={aiPrefill?.documentId}
+          initialAnalysis={aiPrefill?.initialAnalysis}
+        />
+      )}
+
+      {/* AI Application Optimizer Modal */}
+      {showOptimizer && (
+        <ApplicationOptimizer
+          isOpen={showOptimizer}
+          onClose={() => setShowOptimizer(false)}
+          initialContent={optimizerPrefill?.content}
+          initialContentType={optimizerPrefill?.contentType}
+          jobDescription={optimizerPrefill?.jobDescription}
+          documentId={optimizerPrefill?.documentId}
+          userId={user?.id}
+          documentName={optimizerPrefill?.documentName}
+        />
+      )}
+
+      {/* Optimization History Modal */}
+      {showOptimizationHistory && selectedDocumentForHistory && (
+        <OptimizationHistoryModal
+          isOpen={showOptimizationHistory}
+          onClose={() => {
+            setShowOptimizationHistory(false)
+            setSelectedDocumentForHistory(null)
+          }}
+          documentId={selectedDocumentForHistory.id}
+          documentName={selectedDocumentForHistory.name}
         />
       )}
 

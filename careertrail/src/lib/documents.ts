@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { Document, DocumentFormData } from './supabase'
+import { Document, DocumentFormData, DocumentAnalysisRecord } from './supabase'
 
 export class DocumentService {
   static async uploadDocument(
@@ -84,6 +84,38 @@ export class DocumentService {
       console.error('Error uploading document:', error)
       throw error
     }
+  }
+
+  static async saveAnalysis(
+    userId: string,
+    documentId: string,
+    result: unknown
+  ): Promise<DocumentAnalysisRecord> {
+    if (!supabase) throw new Error('Supabase client not initialized')
+    const { data, error } = await supabase
+      .from('document_analyses')
+      .insert([{ user_id: userId, document_id: documentId, result }])
+      .select()
+      .single()
+    if (error) throw new Error(`Failed to save analysis: ${error.message}`)
+    return data as DocumentAnalysisRecord
+  }
+
+  static async getLastAnalysis(
+    userId: string,
+    documentId: string
+  ): Promise<DocumentAnalysisRecord | null> {
+    if (!supabase) throw new Error('Supabase client not initialized')
+    const { data, error } = await supabase
+      .from('document_analyses')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('document_id', documentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw new Error(`Failed to fetch analysis: ${error.message}`)
+    return data
   }
 
   static async getDocuments(userId: string, jobId?: string): Promise<Document[]> {

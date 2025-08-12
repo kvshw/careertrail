@@ -13,20 +13,31 @@ export async function extractTextFromDocument(file: File): Promise<string> {
   if (mimeType === 'application/pdf' || extension === 'pdf') {
     const arrayBuffer = await file.arrayBuffer()
     const pdfjsLib: any = await import('pdfjs-dist/legacy/build/pdf')
-
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
-    const pdf = await loadingTask.promise
-    const pageTexts: string[] = []
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-      const page = await pdf.getPage(pageNumber)
-      const textContent = await page.getTextContent()
-      const pageText = textContent.items
-        .map((item: any) => (typeof item?.str === 'string' ? item.str : ''))
-        .join(' ')
-      pageTexts.push(pageText)
+    // Configure worker source explicitly to avoid Next.js worker path issues
+    // Pinned to version matching installed pdfjs-dist
+    if (pdfjsLib?.GlobalWorkerOptions) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'
     }
 
-    return pageTexts.join('\n\n')
+    try {
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+      const pdf = await loadingTask.promise
+      const pageTexts: string[] = []
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber)
+        const textContent = await page.getTextContent()
+        const pageText = textContent.items
+          .map((item: any) => (typeof item?.str === 'string' ? item.str : ''))
+          .join(' ')
+        pageTexts.push(pageText)
+      }
+
+      return pageTexts.join('\n\n')
+    } catch (pdfError) {
+      console.error('PDF processing error:', pdfError)
+      throw new Error('Failed to process PDF. The file may be corrupted or password-protected.')
+    }
   }
 
   // DOCX in browser

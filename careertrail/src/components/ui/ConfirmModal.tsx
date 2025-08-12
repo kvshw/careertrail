@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -26,6 +27,11 @@ export default function ConfirmModal({
   isLoading = false
 }: ConfirmModalProps) {
   const [isConfirming, setIsConfirming] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleConfirm = async () => {
     setIsConfirming(true)
@@ -84,10 +90,10 @@ export default function ConfirmModal({
 
   const variantStyles = getVariantStyles()
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  const modalContent = (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
         <div className="p-6">
           {/* Header */}
@@ -111,7 +117,7 @@ export default function ConfirmModal({
 
           {/* Message */}
           <div className="mb-6">
-            <p className="text-sm text-gray-600 leading-relaxed">{message}</p>
+            <p className="text-base text-gray-800 leading-relaxed">{message}</p>
           </div>
 
           {/* Actions */}
@@ -142,4 +148,6 @@ export default function ConfirmModal({
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 } 

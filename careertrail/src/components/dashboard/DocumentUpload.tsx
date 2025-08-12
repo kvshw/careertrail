@@ -13,6 +13,7 @@ interface DocumentUploadProps {
   onError: (message: string) => void
   onSuccess: (message: string) => void
   className?: string
+  onRequestAnalyze?: (prefill?: { content?: string; documentType?: DocumentFormData['category'] }) => void
 }
 
 export default function DocumentUpload({ 
@@ -22,7 +23,8 @@ export default function DocumentUpload({
   onCreateFolder,
   onError, 
   onSuccess, 
-  className 
+  className,
+  onRequestAnalyze
 }: DocumentUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -41,6 +43,7 @@ export default function DocumentUpload({
     color: '#3B82F6'
   })
   const [isCreatingFolder, setIsCreatingFolder] = useState(false)
+  const [analyzeAfterUpload, setAnalyzeAfterUpload] = useState<boolean>(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
@@ -142,6 +145,17 @@ export default function DocumentUpload({
     try {
       await onUpload(selectedFile, documentData)
       onSuccess('Document uploaded successfully!')
+      // Optionally open AI analysis
+      if (analyzeAfterUpload && typeof window !== 'undefined' && onRequestAnalyze) {
+        try {
+          const { extractTextFromDocument, getDocumentTypeFromFilename } = await import('@/lib/document-text-extraction')
+          const text = await extractTextFromDocument(selectedFile)
+          const detected = getDocumentTypeFromFilename(selectedFile.name)
+          onRequestAnalyze({ content: text, documentType: detected as any })
+        } catch {
+          onRequestAnalyze({})
+        }
+      }
       
       // Reset form
       setSelectedFile(null)
@@ -155,6 +169,7 @@ export default function DocumentUpload({
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+      setAnalyzeAfterUpload(false)
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Upload failed')
     } finally {
@@ -341,6 +356,20 @@ export default function DocumentUpload({
               rows={3}
               className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 transition-colors resize-none"
             />
+          </div>
+
+          {/* Analyze after upload opt-in */}
+          <div className="flex items-center space-x-2">
+            <input
+              id="analyze-after-upload"
+              type="checkbox"
+              checked={analyzeAfterUpload}
+              onChange={(e) => setAnalyzeAfterUpload(e.target.checked)}
+              className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+            />
+            <label htmlFor="analyze-after-upload" className="text-sm text-gray-700">
+              Analyze this document after upload
+            </label>
           </div>
 
           <button

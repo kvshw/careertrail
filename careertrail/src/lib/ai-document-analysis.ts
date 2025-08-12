@@ -125,6 +125,8 @@ Be specific, constructive, and provide actionable advice based on 2024 hiring st
             content: prompt
           }
         ],
+        // Ask API to return strict JSON when supported
+        response_format: { type: 'json_object' } as any,
         temperature: 0.3,
         max_tokens: 2000,
       })
@@ -135,8 +137,26 @@ Be specific, constructive, and provide actionable advice based on 2024 hiring st
         throw new Error('No response from OpenAI')
       }
 
-      // Parse the JSON response
-      const analysis = JSON.parse(response) as DocumentAnalysisResult
+      // Parse the JSON response (robust to occasional code fences)
+      const sanitize = (raw: string): string => {
+        let text = raw.trim()
+        // Remove Markdown fences like ```json ... ``` or ``` ... ```
+        if (text.startsWith('```')) {
+          text = text.replace(/^```[a-zA-Z]*\n?/,'').replace(/```\s*$/,'').trim()
+        }
+        // If still not pure JSON, try to extract the first {...} block
+        if (!text.startsWith('{')) {
+          const start = text.indexOf('{')
+          const end = text.lastIndexOf('}')
+          if (start !== -1 && end !== -1 && end > start) {
+            text = text.slice(start, end + 1)
+          }
+        }
+        return text
+      }
+
+      const cleaned = sanitize(response)
+      const analysis = JSON.parse(cleaned) as DocumentAnalysisResult
       
       return analysis
     } catch (error) {

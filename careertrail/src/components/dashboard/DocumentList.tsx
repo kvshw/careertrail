@@ -6,6 +6,7 @@ import { DocumentService } from '@/lib/documents'
 import { FolderService } from '@/lib/folders'
 import { cn } from '@/lib/utils'
 import DocumentEditModal from './DocumentEditModal'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface DocumentListProps {
   documents: Document[]
@@ -18,6 +19,9 @@ interface DocumentListProps {
   onSuccess: (message: string) => void
   onConfirmDelete: (id: string, documentName: string) => void
   className?: string
+  onAnalyzeRequest?: (prefill?: { content?: string; documentType?: 'resume' | 'cover_letter' | 'other'; documentId?: string; initialAnalysis?: any }) => void
+  onOptimizerRequest?: (prefill?: { content?: string; contentType?: 'resume' | 'cover_letter'; documentId?: string; documentName?: string }) => void
+  onViewOptimizations?: (documentId: string, documentName: string) => void
 }
 
 export default function DocumentList({ 
@@ -30,12 +34,18 @@ export default function DocumentList({
   onError, 
   onSuccess,
   onConfirmDelete,
-  className 
+  className,
+  onAnalyzeRequest,
+  onOptimizerRequest,
+  onViewOptimizations
 }: DocumentListProps) {
+  const { user } = useAuth()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingDocument, setEditingDocument] = useState<Document | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [processingOptimizer, setProcessingOptimizer] = useState<string | null>(null)
+  const [processingAnalysis, setProcessingAnalysis] = useState<string | null>(null)
 
   const handleDelete = async (id: string) => {
     const document = documents.find(d => d.id === id)
@@ -142,7 +152,7 @@ export default function DocumentList({
                   </p>
                 </div>
               </div>
-                             <div className="flex items-center space-x-1">
+               <div className="flex items-center space-x-1">
                  <button
                    onClick={() => setEditingDocument(document)}
                    className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
@@ -152,11 +162,220 @@ export default function DocumentList({
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                    </svg>
                  </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      if (!user?.id) return
+                      
+                      // Don't allow viewing analysis for "other" document types
+                      if (document.category === 'other') {
+                        onError('Analysis viewing is only available for resumes and cover letters')
+                        return
+                      }
+                      
+                      const record = await DocumentService.getLastAnalysis(user.id, document.id)
+                      if (record && record.result) {
+                        onAnalyzeRequest?.({ initialAnalysis: record.result, documentType: document.category as any, documentId: document.id })
+                      } else {
+                        onError('No previous analysis found for this document')
+                      }
+                    } catch {
+                      onError('Failed to load previous analysis')
+                    }
+                  }}
+                  className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                  title="View last analysis"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+
                  <button
-                   onClick={() => handleDownload(document)}
-                   className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                   title="Download"
+                   onClick={async (e) => {
+                     // Prevent any form submission or navigation
+                     e.preventDefault()
+                     e.stopPropagation()
+                     
+                     // Check if user is authenticated and app is ready
+                     if (!user) {
+                       onError('Please wait for authentication to complete')
+                       return
+                     }
+                     
+                     // Prevent multiple simultaneous requests
+                     if (processingAnalysis === document.id) {
+                       return
+                     }
+                     
+                     try {
+                       if (!onAnalyzeRequest) return
+                       
+                       // Don't allow analysis for "other" document types
+                       if (document.category === 'other') {
+                         onError('AI analysis is only available for resumes and cover letters')
+                         return
+                       }
+                       
+                       setProcessingAnalysis(document.id)
+                       
+                       // Add small delay to ensure app is fully loaded
+                       await new Promise(resolve => setTimeout(resolve, 100))
+                       
+                       // Fetch public URL then fetch file to extract text client-side
+                       const url = await DocumentService.getDownloadUrl(document.file_path)
+                       if (!url) {
+                         throw new Error('Failed to get document URL')
+                       }
+                       
+                       const res = await fetch(url)
+                       if (!res.ok) {
+                         throw new Error('Failed to fetch document')
+                       }
+                       
+                       const blob = await res.blob()
+                       const file = new File([blob], document.name, { type: document.file_type })
+                       const { extractTextFromDocument } = await import('@/lib/document-text-extraction')
+                       const text = await extractTextFromDocument(file)
+                       
+                       if (!text.trim()) {
+                         throw new Error('No text content found in document')
+                       }
+                       
+                       onAnalyzeRequest({
+                         content: text,
+                         documentType: document.category === 'resume' || document.category === 'cover_letter' ? document.category : 'other',
+                         documentId: document.id
+                       })
+                     } catch (error) {
+                       console.error('Analysis error:', error)
+                       onError(error instanceof Error ? error.message : 'Failed to prepare document for analysis')
+                     } finally {
+                       setProcessingAnalysis(null)
+                     }
+                   }}
+                   disabled={processingAnalysis === document.id || !user}
+                   className={`p-1 transition-colors ${
+                     processingAnalysis === document.id 
+                       ? 'text-gray-300 cursor-not-allowed' 
+                       : !user 
+                       ? 'text-gray-300 cursor-not-allowed'
+                       : 'text-gray-400 hover:text-purple-600'
+                   }`}
+                   title={processingAnalysis === document.id ? "Processing..." : "Analyze with AI"}
                  >
+                   {processingAnalysis === document.id ? (
+                     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v2a6 6 0 0 0-6 6h2z"></path>
+                     </svg>
+                   ) : (
+                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                       <path d="M7.5 5.6L10 7L8.6 4.5C8.2 3.8 8.2 3 8.6 2.3L10 0L7.5 1.4C6.8 1.8 6 1.8 5.3 1.4L2.8 0L4.2 2.5C4.6 3.2 4.6 4 4.2 4.7L2.8 7.2L5.3 5.8C6 5.4 6.8 5.4 7.5 5.8V5.6ZM23 12L20.5 13.4C19.8 13.8 19 13.8 18.3 13.4L15.8 12L17.2 14.5C17.6 15.2 17.6 16 17.2 16.7L15.8 19.2L18.3 17.8C19 17.4 19.8 17.4 20.5 17.8L23 19.2L21.6 16.7C21.2 16 21.2 15.2 21.6 14.5L23 12Z"/>
+                     </svg>
+                   )}
+                                 </button>
+                
+                {/* AI Optimizer Button */}
+                {onOptimizerRequest && (document.category === 'resume' || document.category === 'cover_letter') && (
+                  <button
+                    onClick={async (e) => {
+                      // Prevent any form submission or navigation
+                      e.preventDefault()
+                      e.stopPropagation()
+                      
+                      // Check if user is authenticated and app is ready
+                      if (!user) {
+                        onError('Please wait for authentication to complete')
+                        return
+                      }
+                      
+                      // Prevent multiple simultaneous requests
+                      if (processingOptimizer === document.id) {
+                        return
+                      }
+                      
+                      try {
+                        setProcessingOptimizer(document.id)
+                        
+                        // Add small delay to ensure app is fully loaded
+                        await new Promise(resolve => setTimeout(resolve, 100))
+                        
+                        // Fetch public URL then fetch file to extract text client-side
+                        const url = await DocumentService.getDownloadUrl(document.file_path)
+                        if (!url) {
+                          throw new Error('Failed to get document URL')
+                        }
+                        
+                        const res = await fetch(url)
+                        if (!res.ok) {
+                          throw new Error('Failed to fetch document')
+                        }
+                        
+                        const blob = await res.blob()
+                        const file = new File([blob], document.name, { type: document.file_type })
+                        const { extractTextFromDocument } = await import('@/lib/document-text-extraction')
+                        const text = await extractTextFromDocument(file)
+                        
+                        if (!text.trim()) {
+                          throw new Error('No text content found in document')
+                        }
+                        
+                        onOptimizerRequest({
+                          content: text,
+                          contentType: document.category === 'resume' ? 'resume' : 'cover_letter',
+                          documentId: document.id,
+                          documentName: document.name
+                        })
+                      } catch (error) {
+                        console.error('Optimizer error:', error)
+                        onError(error instanceof Error ? error.message : 'Failed to prepare document for optimization')
+                      } finally {
+                        setProcessingOptimizer(null)
+                      }
+                    }}
+                    disabled={processingOptimizer === document.id || !user}
+                    className={`p-1 transition-colors ${
+                      processingOptimizer === document.id 
+                        ? 'text-gray-300 cursor-not-allowed' 
+                        : !user 
+                        ? 'text-gray-300 cursor-not-allowed'
+                        : 'text-gray-400 hover:text-green-600'
+                    }`}
+                    title={processingOptimizer === document.id ? "Processing..." : "AI Optimizer"}
+                  >
+                    {processingOptimizer === document.id ? (
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v2a6 6 0 0 0-6 6h2z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                    )}
+                  </button>
+                )}
+                
+                {/* View Optimizations Button */}
+                {onViewOptimizations && (document.category === 'resume' || document.category === 'cover_letter') && (
+                  <button
+                    onClick={() => onViewOptimizations(document.id, document.name)}
+                    className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
+                    title="View Optimization History"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M16 4v4l-4-4-4 4V4H4v16h16V4h-4zM6 18V6h2v12H6zm4 0V6h2v12h-2zm4 0V6h2v12h-2z"/>
+                    </svg>
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => handleDownload(document)}
+                  className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                  title="Download"
+                >
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                    </svg>

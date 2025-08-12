@@ -43,8 +43,6 @@ export default function FolderList({
     setLastClickTime(now)
     setSelectingFolderId(folderId)
     
-    console.log('FolderList: Selecting folder:', folderId, 'Current selectedFolderId:', selectedFolderId)
-    
     // Immediate selection without delay
     onSelectFolder(folderId)
     setSelectingFolderId(null)
@@ -72,10 +70,7 @@ export default function FolderList({
     const isSelected = selectedFolderId === folder.id
     const isSelecting = selectingFolderId === folder.id
 
-    // Debug logging
-    if (isSelected) {
-      console.log('FolderList: Folder is selected:', folder.name, 'selectedFolderId:', selectedFolderId)
-    }
+    // Check if selected
 
     return (
       <div key={folder.id} className="space-y-1">
@@ -177,9 +172,6 @@ export default function FolderList({
   }
 
   const rootFolders = folders.filter(f => !f.parent_folder_id)
-
-  // Debug logging for "All Documents"
-  console.log('FolderList: selectedFolderId:', selectedFolderId, 'selectingFolderId:', selectingFolderId)
 
   return (
     <div className={cn("space-y-2", className)}>

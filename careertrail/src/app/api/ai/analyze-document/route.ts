@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AIDocumentAnalysisService, DocumentAnalysisRequest } from '@/lib/ai-document-analysis'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { content, documentType, targetRole, targetCompany, industry } = body
+    const { content, documentType, targetRole, targetCompany, industry, documentId, userId } = body
 
     if (!content || !documentType) {
       return NextResponse.json(
@@ -22,6 +23,18 @@ export async function POST(request: NextRequest) {
     }
 
     const analysis = await AIDocumentAnalysisService.analyzeDocument(analysisRequest)
+
+    // Optional: persist analysis if both userId and documentId are provided
+    if (userId && documentId && supabase) {
+      try {
+        const { error } = await supabase
+          .from('document_analyses')
+          .insert([{ user_id: userId, document_id: documentId, result: analysis }])
+        if (error) console.warn('Failed to persist analysis:', error.message)
+      } catch (e) {
+        console.warn('Persist analysis exception:', e)
+      }
+    }
 
     return NextResponse.json(analysis)
   } catch (error) {

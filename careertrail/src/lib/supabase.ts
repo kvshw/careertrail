@@ -119,6 +119,24 @@ export interface DocumentFormData {
   folder_id?: string
 }
 
+export interface DocumentAnalysisRecord {
+  id: string
+  user_id: string
+  document_id: string
+  result: any
+  created_at: string
+}
+
+export interface DocumentOptimizationRecord {
+  id: string
+  user_id: string
+  document_id: string
+  job_description: string
+  optimization_result: any
+  created_at: string
+  updated_at: string
+}
+
 export interface JobFormData {
   company: string
   role: string

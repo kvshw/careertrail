@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 interface SidebarProps {
   activeTab?: 'list' | 'metrics' | 'documents' | 'contacts' | 'interviews'
@@ -15,6 +16,16 @@ export default function Sidebar({ activeTab, onTabChange, currentPage = 'dashboa
   const { user, signOut } = useAuth()
   const router = useRouter()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true)
+  }
+
+  const handleLogoutConfirm = async () => {
+    await signOut()
+    setShowLogoutConfirm(false)
+  }
 
   const navigationItems: Array<{
     id: 'list' | 'metrics' | 'documents' | 'contacts' | 'interviews'
@@ -176,7 +187,7 @@ export default function Sidebar({ activeTab, onTabChange, currentPage = 'dashboa
                 </svg>
               </button>
               <button
-                onClick={() => signOut()}
+                onClick={handleLogoutClick}
                 className="p-1.5 rounded-lg hover:bg-orange-50 transition-colors"
                 title="Sign Out"
               >
@@ -188,6 +199,18 @@ export default function Sidebar({ activeTab, onTabChange, currentPage = 'dashboa
           )}
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogoutConfirm}
+        title="Sign Out"
+        message="Are you sure you want to sign out? You'll need to sign in again to access your account."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="warning"
+      />
     </div>
   )
 } 
