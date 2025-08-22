@@ -35,8 +35,13 @@ export default function OptimizationHistoryModal({
       setError(null)
       const data = await DocumentOptimizationService.getOptimizations(documentId)
       setOptimizations(data)
-    } catch (err) {
-      setError('Failed to load optimization history')
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Failed to load optimization history'
+      if (errorMessage.includes('not yet available') || errorMessage.includes('table needs to be created')) {
+        setError('Optimization feature is not yet available. Database setup required.')
+      } else {
+        setError(errorMessage)
+      }
       console.error('Error fetching optimizations:', err)
     } finally {
       setLoading(false)

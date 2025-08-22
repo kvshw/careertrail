@@ -25,7 +25,11 @@ export class DocumentOptimizationService {
 
     if (error) {
       console.error('Error saving optimization:', error)
-      throw new Error(`Failed to save optimization: ${error.message}`)
+      // Check if table doesn't exist
+      if (error.code === '42P01' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+        throw new Error('Optimization feature is not yet available. The database table needs to be created.')
+      }
+      throw new Error(`Failed to save optimization: ${error.message || 'Unknown database error'}`)
     }
 
     return data
@@ -44,7 +48,11 @@ export class DocumentOptimizationService {
 
     if (error) {
       console.error('Error fetching optimizations:', error)
-      throw new Error(`Failed to fetch optimizations: ${error.message}`)
+      // Check if table doesn't exist
+      if (error.code === '42P01' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+        throw new Error('Optimization feature is not yet available. The database table needs to be created.')
+      }
+      throw new Error(`Failed to fetch optimizations: ${error.message || 'Unknown database error'}`)
     }
 
     return data || []
@@ -68,8 +76,12 @@ export class DocumentOptimizationService {
         // No results found
         return null
       }
+      // Check if table doesn't exist
+      if (error.code === '42P01' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+        return null // Return null instead of throwing for missing table
+      }
       console.error('Error fetching latest optimization:', error)
-      throw new Error(`Failed to fetch latest optimization: ${error.message}`)
+      throw new Error(`Failed to fetch latest optimization: ${error.message || 'Unknown database error'}`)
     }
 
     return data
